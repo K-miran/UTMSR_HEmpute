@@ -169,6 +169,10 @@ static void* LMSE_imputation_thread_callback(void* thread_info_ptr)
 	sprintf(per_var_stats_fp, "per_var_stats_thread_%d.txt", which);
 	FILE* f_per_var_stats = open_f(per_var_stats_fp, "w");
 
+	char pooled_params_fp[1000];
+	sprintf(pooled_params_fp, "pooled_params_%d.txt", which);
+	FILE* f_pooled_params = open_f(pooled_params_fp, "w");
+
 	// Process all the target variants.
 	for (int target_chr_i = 0;
 		target_chr_i < restr_target_genotype_signal_regs->chr_ids->size();
@@ -479,25 +483,31 @@ static void* LMSE_imputation_thread_callback(void* thread_info_ptr)
 					if (par_i == 0)
 					{
 						fprintf(f_op, "%.17f\n", gsl_vector_get(c, used_par_i));
+						fprintf(f_pooled_params, "%.17f\t", gsl_vector_get(c, used_par_i));
 						used_par_i++;
 					}
 					else if (tag_usage_flag[par_i - 1] == 1)
 					{
 						fprintf(f_op, "%.17f\n", gsl_vector_get(c, used_par_i));
+						fprintf(f_pooled_params, "%.17f\t", gsl_vector_get(c, used_par_i));
 						used_par_i++;
 					}
 					else
 					{
+						fprintf(f_pooled_params, "NA\t");
 						fprintf(f_op, "NA\n");
 					}
 				} // par_i loop.
 
+				// Save the coordinates.
 				for (int tag_i = 0; tag_i < tag_var_regs_per_cur_target_var->size(); tag_i++)
 				{
 					fprintf(f_op, "%d\n", tag_var_regs_per_cur_target_var->at(tag_i)->start);
+					fprintf(f_pooled_params, "%d\t", tag_var_regs_per_cur_target_var->at(tag_i)->start);
 				} // par_i loop.
 
 				fprintf(f_op, "%d\n", target_var_regs->at(target_var_i)->start);
+				fprintf(f_pooled_params, "%d\n", target_var_regs->at(target_var_i)->start);
 				fclose(f_op);
 
 				// Test if available.
@@ -653,6 +663,7 @@ static void* LMSE_imputation_thread_callback(void* thread_info_ptr)
 	} // target_chr_i loop.
 
 	fclose(f_per_var_stats);
+	fclose(f_pooled_params);
 }
 
 void train_vicinity_based_LMSE_imputation_model_multithreaded(int start_pos, int end_pos,
