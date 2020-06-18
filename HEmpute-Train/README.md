@@ -9,7 +9,7 @@ The code takes as input:
 <div style="padding:8px;background-color:#ddd;line-height:1.4;">
 - Tag variant genotypes for the reference population panel, <br>
 - Target variant genotypes for the reference population panel, <br>
-- Optional: the known tag variant genotypes for the study population panel, <be>
+- Optional: the known tag variant genotypes for the study population panel, <br>
 - Optional: the known genotypes of the target variant genotypes for performing accuracy benchmarks. <br>
 </div><br>
 and outputs:<br>
