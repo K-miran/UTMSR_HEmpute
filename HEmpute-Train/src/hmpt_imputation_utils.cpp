@@ -499,15 +499,15 @@ static void* LMSE_imputation_thread_callback(void* thread_info_ptr)
 					}
 				} // par_i loop.
 
-				// Save the coordinates.
+				// Save the coordinates: For some weird formatting problem, we have to use the start-1 as the starting position.
 				for (int tag_i = 0; tag_i < tag_var_regs_per_cur_target_var->size(); tag_i++)
 				{
-					fprintf(f_op, "%d\n", tag_var_regs_per_cur_target_var->at(tag_i)->start);
-					fprintf(f_pooled_params, "%d\t", tag_var_regs_per_cur_target_var->at(tag_i)->start);
+					fprintf(f_op, "%d\n", tag_var_regs_per_cur_target_var->at(tag_i)->start - 1);
+					fprintf(f_pooled_params, "%d\t", tag_var_regs_per_cur_target_var->at(tag_i)->start - 1);
 				} // par_i loop.
 
-				fprintf(f_op, "%d\n", target_var_regs->at(target_var_i)->start);
-				fprintf(f_pooled_params, "%d\n", target_var_regs->at(target_var_i)->start);
+				fprintf(f_op, "%d\n", target_var_regs->at(target_var_i)->start - 1);
+				fprintf(f_pooled_params, "%d\n", target_var_regs->at(target_var_i)->start - 1);
 				fclose(f_op);
 
 				// Test if available.
