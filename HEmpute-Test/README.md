@@ -1,11 +1,13 @@
-# HEmpute-Evaluation
+# HEmpute-Test: Secure Imputation via Homomorphic Encryption
 
-### Table of Contents
+HEmpute-Test provides a C++ implementation of secure genotype imputation protocol using the trained linear models from HEmpute-Train. We present two solutions based on homomorphic encryption frameworks - BFV and CKKS.
+
+## Table of Contents
 - [Data Description](#data-description)
 - [Source Code](#source-code)
     - [Requirements](#requirements)
-    - [Building the code](#building-the-code)
-    - [Running the code](#running-the-code)
+    - [Installation](#installation)
+    - [Example Run](#example-run)
 
 ## Data Description
 ### Testing Data
@@ -20,9 +22,8 @@ In addition, we provide "target_geno_model_coordinates_ending.txt " which contai
 
 In our protocol, we will input the genotypes in tag_testing.txt to the models and accuracy will be tested using target_testing.txt genotype data. 
 The genotype files are tab-delimited and each row corresponds to a SNP. First 4 columns describe the SNP and remaining columns are the genotypes:
-- [Chromosome] [Start] [End] [Name] [Genotype for 1st sample] [Genotype for 2nd sample] ...
-
-Each genotype is coded as 0/1/2. Also, we performed population stratification, so we divided the training and testing samples into 3 super-populations African (AFR), Americans (AMR), and European (EUR). The same directory contains the training/testing tag/target SNP genotypes for these samples.
+[Chromosome] [Start] [End] [Name] [Genotype for 1st sample] [Genotype for 2nd sample] ...
+Each genotype is coded as 0/1/2. Also, we perform population stratification, so we divide the training and testing samples into 3 super-populations African (AFR), Americans (AMR), and European (EUR). The same directory contains the training/testing tag/target SNP genotypes for these samples.
 
 ### Model parameters
 The trained parameters are found in the "/params" directory. The files are tab-delimited text files. Each row corresponds to a SNP.
@@ -39,8 +40,8 @@ mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar 
 brew install cmake  
 ```
 
-### Building the code
-First, you can install SEAL library the following commands:
+### Installation
+First, you can install the modified SEAL library the following commands:
 ```
 bash install.sh
 ```
@@ -50,9 +51,9 @@ cmake .
 make
 ```
 
-### Running the code
+### Example Run
 The program will run with the BFV or CKKS homomorphic encryption scheme.
-For example, we run the test program "hefoo"  by running main_heimpute.cpp as follows:
+For example, we run the test program "hefoo"  by running main_hempute.cpp as follows:
 
 ```
 ./hefoo bfv ALL 16 20000 2 est
