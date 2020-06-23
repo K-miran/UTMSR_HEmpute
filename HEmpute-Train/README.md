@@ -51,10 +51,10 @@ chmod 755 setup_run_models.sh
 
 These commands first download the 1000 Genomes Project genotype data, then downloads the array's variant loci, parses the 1000 Genomes Project variants. Then randomly splits the samples into 1500+1004 individuals and runs HEmpute-Train to build approximately 81,000 models.<br>
 
-The parameter set for each variant are stored in files named "pooled_params_0.txt, pooled_params_1.txt, ..." where each line corresponds to a target SNP and the columns contain the linear model parameters. You can pool these files and get the whole parameters list in one file:
+The parameter set for each variant are stored in files named "pooled_params_0.txt, pooled_params_1.txt, ..." where each line corresponds to a target SNP and the columns contain the linear model parameters. You can pool these files and get the whole parameters list in one file and sort the target variants at the same time:
 
 ```
-cat pooled_params_*.txt > pooled_params.txt
+cat pooled_params_*.txt | awk 'BEGIN{FS="\t"}{print $NF"\t"$0}' | sort -k1,1 -n | cut -f2- > pooled_params.txt
 ```
 
 These commands can be used as a template to run other datasets.<br>
