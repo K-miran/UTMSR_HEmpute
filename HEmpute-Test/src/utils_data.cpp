@@ -135,7 +135,6 @@ void SimpleDataFromFile(vector<string>& res, string path)
  where the entries are the per SNP parameters.
  
  @param[in] path, the file name for trained weights
- @param[in] ending
  @param[out] model_wt, [n_snptarget][2d+1] which is obtained by taking the first (2d+1) lines
  the first column is corresponding to the intercepts of the models
  @param[out] tag_geno_model_coordinates, [n_snptarget][2d] which is obtained by taking the next (2d) lines in the params file
@@ -143,7 +142,7 @@ void SimpleDataFromFile(vector<string>& res, string path)
  @throws std::invalid_argument if the data is not readable
 */
 void Read_Params(vector<vector<double>> &model_wt, vector<vector<string>> &tag_model_coordinates,
-                 vector<string> &target_model_coordinates, string path, bool ending)
+                 vector<string> &target_model_coordinates, string path)
 {
     // 1. Read the data and store it as a string-type matrix
     vector<vector<string> > res;
@@ -179,23 +178,9 @@ void Read_Params(vector<vector<double>> &model_wt, vector<vector<string>> &tag_m
     }
     
     // 3.1. read the selected target_geno_model_coordinates
-    vector<string> target_model_ending_coordinates_padded;     // it is padded with "d"
-    if(ending){
-        SimpleDataFromFile(target_model_ending_coordinates_padded, "data/target_geno_model_coordinates_ending.txt");
-    } else{
-        SimpleDataFromFile(target_model_ending_coordinates_padded, "data/target_geno_model_coordinates.txt");
-    }
-    
-    // 3.2. resize each string length to "8"
-    long n_snptarget_model = target_model_ending_coordinates_padded.size();   // the actual number of target SNPs (80,882)
-    target_model_coordinates.resize(n_snptarget_model);
-    
-    MT_EXEC_RANGE(n_snptarget_model, first, last);
-    for(long i = first; i < last; ++i){
-        target_model_coordinates[i] = target_model_ending_coordinates_padded[i];
-        target_model_coordinates[i].resize(8);
-    }
-    MT_EXEC_RANGE_END
+    SimpleDataFromFile(target_model_coordinates, "data/target_geno_model_coordinates.txt");
+    long n_snptarget_model = target_model_coordinates.size();   // the actual number of target SNPs (80,882)
+
    
     // 2. find the starting/ending coordinates
     long n_snptarget_whole = original_target_model_coordinates.size();      // 82993
@@ -238,6 +223,8 @@ void Read_Params(vector<vector<double>> &model_wt, vector<vector<string>> &tag_m
         for(long d = 0; d < dim; ++d){
             tag_model_coordinates[i][d] = res[j][d + dim1];
         }
+        //cout << i << ": " << model_wt[i][0] << "," <<  tag_model_coordinates[i][0] << "," << endl;
+        //cout << res[j][dim + dim1] << endl;
         i++;
     }
 }
@@ -249,21 +236,15 @@ void Read_Params(vector<vector<double>> &model_wt, vector<vector<string>> &tag_m
  [Chromosome] [Start] [End] [Name], [Genotype for 1st sample] [Genotype for 2nd sample])
  
  @param[in] path, the file name for an input data
- @param[in] ending, 1 if "End" is used; otherwise 0
  @param[in] split_char, the character used for delimiting an input file
  @param[out] res_list, [n_snptag]: the list of Starting or Ending
  @param[out] res_array, [n_snptarget][n]: genotype array where n is the number of samples
  @throws std::invalid_argument if the data is not readable
  */
 void TagDataFromFile(vector<string>& res_list, vector<vector<string>>& res_array,
-                     string path, bool ending, char split_char)
+                     string path, char split_char)
 {
-    long list_index;
-    if(ending){
-        list_index = 2;     // use "End"
-    } else{
-        list_index = 1;     // use "Start"
-    }
+    long list_index = 1;     // use "Start"
     
     ifstream openFile(path.data());
     
@@ -298,7 +279,6 @@ void TagDataFromFile(vector<string>& res_list, vector<vector<string>>& res_array
  [Chromosome] [Start] [End] [Name], [Genotype for 1st sample] [Genotype for 2nd sample])
  
  @param[in] path, the file name for an input data
- @param[in] ending, 1 if "End" is used; otherwise 0
  @param[in] array, 1 if we store both list and array; otherwise 0
  @param[in] split_char, the character used for delimiting an input file
  @param[out] res_list, [n_snptag]: the list of Starting or Ending
@@ -306,14 +286,10 @@ void TagDataFromFile(vector<string>& res_list, vector<vector<string>>& res_array
  @throws std::invalid_argument if the data is not readable
  */
 void TargetDataFromFile(vector<string>& res_list, vector<vector<string>>& res_array,
-                        string path, bool ending, bool array, char split_char)
+                        string path, bool array, char split_char)
 {
-    long list_index;
-    if(ending){
-        list_index = 2;     // use "End"
-    } else{
-        list_index = 1;     // use "Start"
-    }
+    long list_index = 1;     // use "Start"
+    
     
     ifstream openFile(path.data());
     
@@ -366,7 +342,6 @@ void TargetDataFromFile(vector<string>& res_list, vector<vector<string>>& res_ar
             throw invalid_argument("Error: cannot find the ending");
         }
     }
-    
 }
 
 /*
@@ -376,7 +351,6 @@ void TargetDataFromFile(vector<string>& res_list, vector<vector<string>>& res_ar
  @param[in] tag_filename, the filename for tag genotype dataset
  @param[in] target_filename, the filename for target genotype dataset
  @param[in] selection, 1 if "num of target snps = 20K"; 2 if "num of target snps = 40K"; otherwise 3.
- @param[in] ending
  @param[in] acc_test, 1 if "ytest" is needed; otherwise 0
 
  @param[out] ytest[n_snptag][n_test]
@@ -389,7 +363,7 @@ void Read_Genotype(dmat& ytest, dvec& model0, dmat& model,
                    vector<vector<int>>& tag_data, vector<long>& tag_model_starting_index,
                    DATAParam &DATAparam,
                    vector <vector<double>> model_data, vector <vector<string>> tag_model_coordinates, vector <string> target_model_coordinates,
-                   string tag_filename, string target_filename, int selection, bool ending, bool acc_test)
+                   string tag_filename, string target_filename, int selection, bool acc_test)
 {
     long dim = model_data[0].size() - 1;
     
@@ -404,14 +378,14 @@ void Read_Genotype(dmat& ytest, dvec& model0, dmat& model,
             n_snptarget_imputed = 40000;
             break;
         case 3:
-            n_snptarget_imputed = model_data.size();
+            n_snptarget_imputed = model_data.size();    // 80,882
             break;
     }
     
     // 1.1 First read the raw tagSNPs
     vector<string> tag_data_coordinates;        // [16K]: ending location of tag
     vector<vector<string>> tag_str_data;        // [16K][1004]: columns = ([name] [start] [end] [id], ...)
-    TagDataFromFile(tag_data_coordinates, tag_str_data, tag_filename, ending);
+    TagDataFromFile(tag_data_coordinates, tag_str_data, tag_filename);
     
     // 1.2. Convert the tag data into int-type
     long n_snptag = tag_str_data.size();
@@ -433,7 +407,7 @@ void Read_Genotype(dmat& ytest, dvec& model0, dmat& model,
     vector<string> target_data_coordinates; // [83K]
     vector<vector<string>> target_rawdata;  // [83K][1004]
     
-    TargetDataFromFile(target_data_coordinates, target_rawdata, target_filename, ending, acc_test);
+    TargetDataFromFile(target_data_coordinates, target_rawdata, target_filename, acc_test);
     
     long n_snptarget = target_data_coordinates.size();
     cout << "> tag(nsnptag,ntest) = (" << n_snptag << ","  << n_test << ") " << endl;
@@ -458,7 +432,7 @@ void Read_Genotype(dmat& ytest, dvec& model0, dmat& model,
     // 4. Divide the whole dataset into nthread-chunks and
     long chunks_size = floor((double) (n_snptarget_imputed)/ DATAparam.n_thread);
     
-    MT_EXEC_RANGE(DATAparam.n_thread, first, last);
+    MT_EXEC_RANGE(DATAparam.n_thread, first, last); // DATAparam.n_thread
     for(long i = first; i < last; ++i){
         long jstart = i * chunks_size;
         long jend;

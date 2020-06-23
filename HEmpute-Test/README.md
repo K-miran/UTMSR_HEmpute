@@ -57,13 +57,15 @@ For example, we run the test program "hefoo"  by running main_hempute.cpp as fol
 
 ```
 ./hefoo bfv ALL 16 20000 2 est
-./hefoo ckks ALL 16 40000 16 label
-./hefoo ckks EUR 16 80000 32 mAUC
+./hefoo ckks AFR 16 40000 16 label
+./hefoo ckks AMR 16 40000 16 microAUC
+./hefoo ckks EUR 16 80000 32 macroacc
 ```
 As in the example, the following list of command-line arguments is given after the name of the test program:
 - An HE scheme name (e.g. bfv or ckks).
 - Data type (e.g. ALL, AFR, AMR, EUR). 
 - Number of threads.
-- Number of target SNPs (e.g. 20000,40000,80000).
-- Number of vicinities of the imputation linear model (e.g. 2,4,8,16,24,32).
-- The output format: est if you want to output the predicted estimations; label if you want to output the prediction labels for 0,1,2; mAUC if you want to calculate the micro-AUCs of the actual genotypes and the estimated genotypes.
+- Number of target SNPs (e.g. 20000, 40000, 80000).
+- Number of vicinities of the imputation linear model (e.g. 2, 4, 8, 16, 24, 32).
+- The output format: *est* if you want to output the predicted estimations; *label* if you want to output the prediction labels for 0,1,2; *microAUC* if you want to calculate the micro-AUCs of the actual genotypes and the estimated genotypes; and *macroacc* if you want to calculate the macro-aggregated accuracies over all variants and non-reference genotypes. 
+

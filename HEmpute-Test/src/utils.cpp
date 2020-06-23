@@ -73,7 +73,8 @@ bool scale_and_modt(uint64_t& x, double a, double scale, uint64_t modulus)
 void print_string_hex(string res)
 {
     cout << hex;
-    for (int i= 0; i < res.size(); i++){
+    int size = res.size();
+    for (int i= 0; i < size; i++){
         cout << (int) res[i] << " ";
     }
     cout << endl;
@@ -167,6 +168,48 @@ void print_estimates(string filename, dmat ypred, vector<string> target_geno_id)
 }
 
 /*
+ Print the actual genotypes and the predicted values.
+ 
+ @param[in] yreal, the actual real-valued array, [p][n]
+ @param[in] ypred, the predicted real-valued array, [p][n]
+ @param[in] filename, the filename
+ */
+void print_data(dmat yreal, dmat ypred, string filename){
+    long nsnp = yreal.size();
+    
+    fstream outf;
+    outf.open(filename.c_str(), fstream::in | fstream::out | fstream::app);
+    for(long i = 0; i < nsnp; ++i){
+        long ntest = yreal[i].size();
+        for(long j = 0; j < ntest; ++j){
+            outf << yreal[i][j] << "\t" << ypred[i][j] << endl;
+        }
+    }
+}
+
+/*
+ Print the actual genotypes (non-reference) and the predicted values.
+ 
+ @param[in] yreal, the actual real-valued array, [p][n]
+ @param[in] ypred, the predicted real-valued array, [p][n]
+ @param[in] filename, the filename
+ */
+void print_nonref_data(dmat yreal, dmat ypred, string filename){
+    long nsnp = yreal.size();
+    
+    fstream outf;
+    outf.open(filename.c_str(), fstream::in | fstream::out | fstream::app);
+    for(long i = 0; i < nsnp; ++i){
+        long ntest = yreal[i].size();
+        for(long j = 0; j < ntest; ++j){
+            if(yreal[i][j]!= 0.0){
+                outf << yreal[i][j] << "\t" << ypred[i][j] << endl;
+            }
+        }
+    }
+}
+
+/*
  Change the actual vector into class vectors
  
  @param[in] ytest, the double-type actual vector
@@ -227,7 +270,7 @@ void get_labels(dmat& ypred_label, dvec ypred)
  @param[out] cur_mAUC, the micro-AUC
  @throws std::invalid_argument if the sizes of yreal and yprea do not match
  */
-void get_mAUC(double& cur_mAUC, dvec yreal, dvec ypred){
+void get_microAUC(double& cur_mAUC, dvec yreal, dvec ypred){
     long ntest = (long) yreal.size();
     
     if(ntest != (long) ypred.size()){
@@ -269,6 +312,7 @@ void get_mAUC(double& cur_mAUC, dvec yreal, dvec ypred){
         cur_mAUC = cur_mAUC / (npos * nneg);
     }
 }
+
 
 /*
  Calculate the mean absolute errors of the current SNP variant
@@ -336,31 +380,131 @@ void get_mse(double& mse, dvec yreal, dvec ypred){
  @params[out] mean_mAUCs, the average of the micro-AUCs of all the variants
  @param[out] mAUCs, the micro-AUCs of all the variants
  */
-void test_mAUC(double& mean_mAUCs, dvec& mAUCs, dmat yreal, dmat ypred, string filename){
+double test_microAUC(dmat yreal, dmat ypred){
     long nsnp = yreal.size();
-    mean_mAUCs = 0.0;
+    dvec mAUCs(nsnp);
     
     MT_EXEC_RANGE(nsnp, first, last);
-    for(long i = first; i < last; ++i){
-        get_mAUC(mAUCs[i], yreal[i], ypred[i]);
+    for(long j = first; j < last; ++j){
+        get_microAUC(mAUCs[j], yreal[j], ypred[j]);
     }
     MT_EXEC_RANGE_END;
     
-    if(filename == "none"){
-        for(long i = 0; i < nsnp; ++i){
-            mean_mAUCs = ((double) i/(i+1)) * mean_mAUCs + (1.0/(i+1)) * mAUCs[i];
-        }
+    double res = 0.0;
+    for(long j = 0; j < nsnp; ++j){
+        res = ((double) j/(j+1)) * res + (1.0/(j+1)) * mAUCs[j];
     }
-    else{
-        fstream outf;
-        outf.open(filename.c_str(), fstream::in | fstream::out | fstream::app);   // open the file
+    return res;
+}
 
-        for(long i = 0; i < nsnp; ++i){
-            outf << i << ": " << mAUCs[i] << endl;
-            mean_mAUCs = ((double) i/(i+1)) * mean_mAUCs + (1.0/(i+1)) * mAUCs[i];
+
+/*
+ Calculate the macro-AUC of all the SNP variants
+ by computing the average of acc[j]'s
+ s.t. acc[j] = [#(correctly imputed individuals for variant j)/#(individuals for variant j)]
+ 
+ @param[in] yreal, the actual genotypes of size [p][n]
+ @param[in] ypred, the predicted genotypes of size [p][n]
+ @param[out] res, the macro-aggregated accuracy
+ */
+double test_allvariant_macro_acc(dmat yreal, dmat ypred)
+{
+    long nsnp = yreal.size();
+    vector<double> var_acc (nsnp);
+    
+    // 1. compute each variant accuracy
+    // #(correctly imputed individuals for variant j)/#(individuals for variant j)
+    MT_EXEC_RANGE(nsnp, first, last);
+    for(long j = first; j < last; ++j){
+        long n_match = 0;
+        long nsamples = yreal[j].size();
+        
+        for(long i = 0; i < nsamples; ++i){
+            if(yreal[j][i] == 0.0){
+                if((ypred[j][i] < 0.25)){
+                    n_match++;
+                }
+            }
+            else if(yreal[j][i] == 0.5){
+                if((ypred[j][i] >= 0.25) && (ypred[j][i] <= 0.75)){
+                    n_match++;
+                }
+            }
+            else if(yreal[j][i] == 1.0){
+                if(ypred[j][i] >= 0.75){
+                    n_match++;
+                }
+            }
         }
-        outf.close();
+        var_acc[j] = (double)(n_match)/ (double)(nsamples);
     }
+    MT_EXEC_RANGE_END;
+    
+    // 2. Take the average of the variant accuracies
+    double res = 0.0;
+    for(long j = 0; j < nsnp; ++j){
+        res += var_acc[j];
+    }
+    res /= (double) nsnp;
+    return res;
+}
+
+/*
+ Calculate the macro-AUC of all the SNP variants with non-reference genotypes:
+ by computing the average of acc[j]'s
+ s.t. acc[j] = [#(correctly imputed non.ref individuals for variant j)/#(non.ref individuals for variant j)]
+ 
+ @param[in] yreal, the actual genotypes of size [p][n]
+ @param[in] ypred, the predicted genotypes of size [p][n]
+ @param[out] res, the macro-aggregated accuracy
+ */
+double test_nonrefgenotype_macro_acc(dmat yreal, dmat ypred)
+{
+    long nsnp = yreal.size();
+    vector<long> n_non_ref (nsnp, 0ULL);  // #(non.ref individuals for variant j)
+    vector<long> n_non_ref_match (nsnp, 0ULL);  // #(correctly imputed non.ref individuals for variant j)
+    vector<double> var_acc (nsnp);
+    
+    MT_EXEC_RANGE(nsnp, first, last);
+    for(long j = first; j < last; ++j){
+        long ntest = yreal[j].size();
+        for(long i = 0; i < ntest; ++i){
+            if(yreal[j][i] == 0.5){
+                n_non_ref[j]++;
+                if((ypred[j][i] >= 0.25) && (ypred[j][i] <= 0.75)){
+                    n_non_ref_match[j]++;
+                }
+            }
+            else if(yreal[j][i] == 1.0){
+                n_non_ref[j]++;
+                if(ypred[j][i] >= 0.75){
+                    n_non_ref_match[j]++;
+                }
+            }
+        }
+        if(n_non_ref[j] != 0){
+            var_acc[j] = (double)(n_non_ref_match[j])/ (double)(n_non_ref[j]);
+        }
+    }
+    MT_EXEC_RANGE_END;
+    
+#if 0
+    for(long j = 0; j < 10; ++j){
+        cout << var_acc[j] << "=" << n_non_ref_match[j] << "/" << n_non_ref[j] << endl;
+    }
+#endif
+    
+    // 2. Take the average over the variant accuracies
+    double res = 0.0;
+    long n_pred = 0;
+    for(long j = 0; j < nsnp; ++j){
+        if(n_non_ref[j] != 0){
+            res += var_acc[j];
+            n_pred++;
+        }
+    }
+    res /= (double) n_pred;
+    return res;
 }
 
 /*
