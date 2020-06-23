@@ -18,7 +18,6 @@ The "/data" directory contains three-types of (compressed) data:
 
 You can also download these data via this [link](https://github.com/K-miran/secure-imputation/tree/master/data).
 We excluded the variants at the very end of the chromosome 22 and at the middle of the chromosome (centromere) in the whole target SNPs because we do not have many tag SNPs around those locations. So, the "target_geno_model_coordinates.txt " contains the start coordinates of the target SNPs that were actually used for imputation in our experiment. 
-In addition, we provide "target_geno_model_coordinates_ending.txt " which contains the end coordinates of the actual target SNPs. 
 
 In our protocol, we will input the genotypes in tag_testing.txt to the models and accuracy will be tested using target_testing.txt genotype data. 
 The genotype files are tab-delimited and each row corresponds to a SNP. First 4 columns describe the SNP and remaining columns are the genotypes:

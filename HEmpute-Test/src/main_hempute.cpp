@@ -13,9 +13,6 @@
 #include "thread.h"
 #include "TestHEmpute.h"
 
-// ./hefoo ckks ALL 16 20000 2 mAUC
-// ./hefoo ckks AFR 16 20000 16 0 1
-
 using namespace std;
 using namespace seal;
 
