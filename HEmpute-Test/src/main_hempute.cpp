@@ -13,6 +13,9 @@
 #include "thread.h"
 #include "TestHEmpute.h"
 
+// ./hefoo ckks ALL 16 20000 2 mAUC
+// ./hefoo ckks AFR 16 20000 16 0 1
+
 using namespace std;
 using namespace seal;
 
@@ -219,8 +222,8 @@ int main(int argc, char** argv) {
         print_estimates(filename, HE_ypred, target_model_coordinates);
     }
     else if(acc_test == "microAUC"){
-        double mean_microAUC = test_microAUC(ytest, HE_ypred);
-        cout << "> Average microAUC = " << mean_microAUC << endl;
+        string filename = "res/microAUC_" + scheme  + "_" + data + "_" + to_string(n_target) + "_" + to_string(dim) + ".txt";
+        print_data(ytest, HE_ypred, filename);
     }
     else if(acc_test == "macroacc"){
         double allmacro = test_allvariant_macro_acc(ytest, HE_ypred);

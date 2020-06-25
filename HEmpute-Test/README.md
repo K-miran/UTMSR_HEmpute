@@ -18,6 +18,7 @@ The "/data" directory contains three-types of (compressed) data:
 
 You can also download these data via this [link](https://github.com/K-miran/secure-imputation/tree/master/data).
 We excluded the variants at the very end of the chromosome 22 and at the middle of the chromosome (centromere) in the whole target SNPs because we do not have many tag SNPs around those locations. So, the "target_geno_model_coordinates.txt " contains the start coordinates of the target SNPs that were actually used for imputation in our experiment. 
+In addition, we provide "target_geno_model_coordinates_ending.txt " which contains the end coordinates of the actual target SNPs. 
 
 In our protocol, we will input the genotypes in tag_testing.txt to the models and accuracy will be tested using target_testing.txt genotype data. 
 The genotype files are tab-delimited and each row corresponds to a SNP. First 4 columns describe the SNP and remaining columns are the genotypes:
@@ -52,7 +53,7 @@ make
 
 ### Example Run
 The program will run with the BFV or CKKS homomorphic encryption scheme.
-For example, we run the test program "hefoo"  by running main_hempute.cpp as follows:
+For example, we first make a new folder "res" and run the test program "hefoo"  by running main_hempute.cpp as follows:
 
 ```
 ./hefoo bfv ALL 16 20000 2 est
@@ -65,6 +66,20 @@ As in the example, the following list of command-line arguments is given after t
 - Data type (e.g. ALL, AFR, AMR, EUR). 
 - Number of threads.
 - Number of target SNPs (e.g. 20000, 40000, 80000).
-- Number of vicinities of the imputation linear model (e.g. 2, 4, 8, 16, 24, 32).
-- The output format: *est* if you want to output the predicted estimations; *label* if you want to output the prediction labels for 0,1,2; *microAUC* if you want to calculate the micro-AUCs of the actual genotypes and the estimated genotypes; and *macroacc* if you want to calculate the macro-aggregated accuracies over all variants and non-reference genotypes. 
+- Vicinity size of the imputation linear model (e.g. 2, 4, 8, 16, 24, 32). That is, each variant genotype is modeled using genotypes of variants within variant vicinity of the variant.
+- The output format
+    - nulll: declare nothing in this scope
+    - est: output the predicted estimations
+    - label: output the prediction labels for 0,1,2
+    - microAUC: output the actual genotypes and  the estimated genotypes in order to calculate the micro-AUCs
+    - macroacc: calculate the macro-aggregated accuracies over all variants and non-reference genotypes. 
 
+Then the results are stored in the "/res" directory. 
+We also provide the code to measure the micro-AUC. After running the C++ test program with the "micro-AUC" mode, you can obtain the accuracy results by running microAUC_evaluation.py as follows: 
+```
+./python microAUC_evaluation.py -i inputfile -o outputfile
+```
+For example, if running the test program "./hefoo ckks ALL 16 80000 16 microAUC", the input list file will be stored as "res/microAUC_ckks_ALL_80000_32.txt ". So, you can run the code by the following command
+```
+./python microAUC_evaluation.py -i res/microAUC_ckks_ALL_80000_32.txt -o res/microAUC_ckks_ALL_80000_32.png 
+```

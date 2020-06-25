@@ -188,28 +188,6 @@ void print_data(dmat yreal, dmat ypred, string filename){
 }
 
 /*
- Print the actual genotypes (non-reference) and the predicted values.
- 
- @param[in] yreal, the actual real-valued array, [p][n]
- @param[in] ypred, the predicted real-valued array, [p][n]
- @param[in] filename, the filename
- */
-void print_nonref_data(dmat yreal, dmat ypred, string filename){
-    long nsnp = yreal.size();
-    
-    fstream outf;
-    outf.open(filename.c_str(), fstream::in | fstream::out | fstream::app);
-    for(long i = 0; i < nsnp; ++i){
-        long ntest = yreal[i].size();
-        for(long j = 0; j < ntest; ++j){
-            if(yreal[i][j]!= 0.0){
-                outf << yreal[i][j] << "\t" << ypred[i][j] << endl;
-            }
-        }
-    }
-}
-
-/*
  Change the actual vector into class vectors
  
  @param[in] ytest, the double-type actual vector
@@ -259,57 +237,6 @@ void get_labels(dmat& ypred_label, dvec ypred)
             dtmp.push_back(1.0 / (1.0 + exp(-dval)));
         }
         ypred_label.push_back(dtmp);
-    }
-}
-
-/*
- Calculate the micro-AUC of the current SNP variant
- 
- @param[in] yreal, the actual genotypes
- @param[in] ypred, the predicted genotypes
- @param[out] cur_mAUC, the micro-AUC
- @throws std::invalid_argument if the sizes of yreal and yprea do not match
- */
-void get_microAUC(double& cur_mAUC, dvec yreal, dvec ypred){
-    long ntest = (long) yreal.size();
-    
-    if(ntest != (long) ypred.size()){
-        throw std::invalid_argument("AUC: dimension mismatch");
-    }
-    else{
-        // change yreal into class vectors: {0,0.5,1} -> {0,1,2} -> [1,0,0] or [0,1,0] or [0,0,1] (n*3)
-        dmat ylabel;
-        get_dummies(ylabel, yreal);
-
-        dmat ypred_label;
-        get_labels(ypred_label, ypred);
-
-        double npos = 0.0;
-        double nneg = 0.0;
-
-        for (long i = 0; i < ntest; ++i){
-            for (long j = 0; j < 3; ++j){
-                if(ylabel[i][j] == 1.0){
-                    npos += 1.0;
-                } else{
-                    nneg += 1.0;
-                }
-            }
-        }
-
-        cur_mAUC = 0.0;
-        for (long a = 0; a < ntest; ++a){
-            for (long b = 0; b < ntest; ++b){
-                for (long i = 0; i < 3; ++i){
-                    for(long j = 0; j < 3; ++j){
-                        if((ylabel[a][i] == 1.0) && (ylabel[b][j] == 0.0) && (ypred_label[a][i] >= ypred_label[b][j])){
-                            cur_mAUC += 1.0;
-                        }
-                    }
-                }
-            }
-        }
-        cur_mAUC = cur_mAUC / (npos * nneg);
     }
 }
 
@@ -371,35 +298,7 @@ void get_mse(double& mse, dvec yreal, dvec ypred){
 
 
 /*
- Calculate the micro-AUC of all the SNP variants
- as well as their average.
- 
- @param[in] yreal, the actual genotypes of size [p][n]
- @param[in] ypred, the predicted genotypes of size [p][n]
- @param[in] filename, the filename where mAUCs are stored
- @params[out] mean_mAUCs, the average of the micro-AUCs of all the variants
- @param[out] mAUCs, the micro-AUCs of all the variants
- */
-double test_microAUC(dmat yreal, dmat ypred){
-    long nsnp = yreal.size();
-    dvec mAUCs(nsnp);
-    
-    MT_EXEC_RANGE(nsnp, first, last);
-    for(long j = first; j < last; ++j){
-        get_microAUC(mAUCs[j], yreal[j], ypred[j]);
-    }
-    MT_EXEC_RANGE_END;
-    
-    double res = 0.0;
-    for(long j = 0; j < nsnp; ++j){
-        res = ((double) j/(j+1)) * res + (1.0/(j+1)) * mAUCs[j];
-    }
-    return res;
-}
-
-
-/*
- Calculate the macro-AUC of all the SNP variants
+ Calculate the macro-accuracy of all the SNP variants
  by computing the average of acc[j]'s
  s.t. acc[j] = [#(correctly imputed individuals for variant j)/#(individuals for variant j)]
  
@@ -450,7 +349,7 @@ double test_allvariant_macro_acc(dmat yreal, dmat ypred)
 }
 
 /*
- Calculate the macro-AUC of all the SNP variants with non-reference genotypes:
+ Calculate the macro-accuracy of non-reference genotypes
  by computing the average of acc[j]'s
  s.t. acc[j] = [#(correctly imputed non.ref individuals for variant j)/#(non.ref individuals for variant j)]
  
@@ -550,7 +449,7 @@ void test_mae(double& mean_errs, dvec& errs, dmat yreal, dmat ypred, string file
  
  @param[in] yreal, the actual genotypes of size [p][n]
  @param[in] ypred, the predicted genotypes of size [p][n]
- @param[in] filename, the filename where mAUCs are stored
+ @param[in] filename, the filename where the results are stored
  @params[out] mean_errs, the average of the mean squared errors of all the variants
  @param[out] errs, the mean squared errors of all the variants
  */

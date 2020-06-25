@@ -44,18 +44,15 @@ bool compare_strings(vector<string> st1, vector<string> st2);
 void print_labels(string filename, dmat ypred, vector<string> target_geno_id);
 void print_estimates(string filename, dmat ypred, vector<string> target_geno_id);
 void print_data(dmat yreal, dmat ypred, const string filename = "none");
-void print_nonref_data(dmat yreal, dmat ypred, const string filename = "none");
 
 /*------------------------
  Accuracy measure
  ------------------------*/
 void get_dummies(dmat& ylabel, dvec ytest);
 void get_labels(dmat& ypred_label, dvec ypred);
-void get_microAUC(double& cur_mAUC, dvec yreal, dvec ypred);
 void get_mae(double& mae, dvec yreal, dvec ypred);
 void get_mse(double& mse, dvec yreal, dvec ypred);
 
-double test_microAUC(dmat ytest, dmat ypred);
 double test_allvariant_macro_acc(dmat ytest, dmat ypred);
 double test_nonrefgenotype_macro_acc(dmat ytest, dmat ypred);
 void test_mae(double& mean_errs, dvec& errs, dmat yreal, dmat ypred, const string filename = "none");
