@@ -1,6 +1,6 @@
 # HEmpute-Test: Secure Imputation via Homomorphic Encryption
 
-HEmpute-Test provides a C++ implementation of secure genotype imputation protocol using the trained linear models from HEmpute-Train. We present two solutions based on homomorphic encryption frameworks - BFV and CKKS.
+HEmpute-Test provides a C++ implementation of secure genotype imputation protocol using the trained linear models from HEmpute-Train. We present two solutions based on homomorphic encryption frameworks - BFV[https://eprint.iacr.org/2012/144](https://eprint.iacr.org/2012/144) and CKKS[https://eprint.iacr.org/2016/421](https://eprint.iacr.org/2016/421). Our secure imputation protocols are implemented with Microsoft SEAL version 3.4, which includes implementations of BFV and CKKS.
 
 ## Table of Contents
 - [Data Description](#data-description)
@@ -12,15 +12,14 @@ HEmpute-Test provides a C++ implementation of secure genotype imputation protoco
 ## Data Description
 ### Testing Data
 The "/data" directory contains three-types of (compressed) data:
-- Tag SNP genotypes: tag_testing.txt, tag_testing_AFR.txt, tag_testing_AMR.txt, tag_testing_EUR.txt.
-- Target SNP genotypes: target_testing.txt, target_testing_AFR.txt, target_testing_AMR.txt, target_testing_EUR.txt.
+- Tag variant genotypes: tag_testing.txt, tag_testing_AFR.txt, tag_testing_AMR.txt, tag_testing_EUR.txt.
+- Target variant genotypes: target_testing.txt, target_testing_AFR.txt, target_testing_AMR.txt, target_testing_EUR.txt.
 - target_geno_model_coordinates.txt 
 
 You can also download these data via this [link](https://github.com/K-miran/secure-imputation/tree/master/data).
 We excluded the variants at the very end of the chromosome 22 and at the middle of the chromosome (centromere) in the whole target SNPs because we do not have many tag SNPs around those locations. So, the "target_geno_model_coordinates.txt " contains the start coordinates of the target SNPs that were actually used for imputation in our experiment. 
-In addition, we provide "target_geno_model_coordinates_ending.txt " which contains the end coordinates of the actual target SNPs. 
 
-In our protocol, we will input the genotypes in tag_testing.txt to the models and accuracy will be tested using target_testing.txt genotype data. 
+In our protocol, we will input the genotypes in tag_testing.txt to the models and accuracy will be tested using target genotype data in target_testing.txt. 
 The genotype files are tab-delimited and each row corresponds to a SNP. First 4 columns describe the SNP and remaining columns are the genotypes:
 [Chromosome] [Start] [End] [Name] [Genotype for 1st sample] [Genotype for 2nd sample] ...
 Each genotype is coded as 0/1/2. Also, we perform population stratification, so we divide the training and testing samples into 3 super-populations African (AFR), Americans (AMR), and European (EUR). The same directory contains the training/testing tag/target SNP genotypes for these samples.
