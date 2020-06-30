@@ -1,6 +1,6 @@
 # HEmpute-Test: Secure Imputation via Homomorphic Encryption
 
-HEmpute-Test provides a C++ implementation of secure genotype imputation protocol using the trained linear models from HEmpute-Train. We present two solutions based on homomorphic encryption frameworks - BFV[https://eprint.iacr.org/2012/144](https://eprint.iacr.org/2012/144) and CKKS[https://eprint.iacr.org/2016/421](https://eprint.iacr.org/2016/421). Our secure imputation protocols are implemented with Microsoft SEAL version 3.4, which includes implementations of BFV and CKKS.
+HEmpute-Test provides a C++ implementation of secure genotype imputation protocol using the trained linear models from HEmpute-Train. We present two solutions based on homomorphic encryption frameworks - BFV [(https://eprint.iacr.org/2012/144)](https://eprint.iacr.org/2012/144) and CKKS [(https://eprint.iacr.org/2016/421)](https://eprint.iacr.org/2016/421). Our secure imputation protocols are implemented with Microsoft SEAL version 3.4, which includes implementations of BFV and CKKS.
 
 ## Table of Contents
 - [Data Description](#data-description)
