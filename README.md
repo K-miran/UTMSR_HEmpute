@@ -132,15 +132,16 @@ void Read_Genotype(vector <vector<double>>& ytest, vector<double>& model0, vecto
                    string tag_path, string target_path, int selection, const bool acc_test);
 ```
 
-Each row of the input data in the `tag_path` directory is corresponding to one tag SNP and the tag variant genotypes are saved as `tag_geno_data`. Each row of the input data in the `target_path` directory  is corresponding to one target SNP. When `acc_test=1`, the target variant genotypes are saved as `ytest`. Otherwise, we do not save the variants. For each target variant, we store the starting coordinate for the tag SNPs to be used for evaluation. The stored model parameters are divided into `model0` (intercepts) and  `model` (slope). In class `DATAParam`, we have the following variables:
-- dim: the number of features
-- n_test: the sample size
-- n_snptag: the number of tag variants 
-- n_snptarget: the number of target variants 
-- n_snptarget_model: the actual number of imputed target variants 
-- n_thread: the number of threads to be used for implementation
-We have created the class named `DATAParam`, so now we create an object of `DATAParam` by specifyng the object name `DATAparam`.
+Each row of the input data in the `tag_path` directory is corresponding to one tag SNP and the tag variant genotypes are saved as `tag_geno_data`. Each row of the input data in the `target_path` directory  is corresponding to one target SNP. When `acc_test=1`, the target variant genotypes are saved as `ytest`. Otherwise, we do not store the variants for saving the memory storage. For each target variant, we store the starting coordinate for the tag SNPs to be used for evaluation as `tag_model_starting_index`. The stored model parameters are divided into the intercepts (`model0`)  and slope (`model`). In class `DATAParam`, we have the following variables of dataset:
 
+- dim: the number of features,
+- n_test: the sample size,
+- n_snptag: the number of tag variant genotypes,
+- n_snptarget: the number of target variant genotypes,
+- n_snptarget_model: the actual number of imputed target variant genotypes,
+- n_thread: the number of threads to be used for implementation.
+
+We have created the class named `DATAParam`, so now we create an object of `DATAParam` by specifying the object name `DATAparam`.
 
 
 3. Evaluating the model over encrypted tag variants 
@@ -152,7 +153,13 @@ void ckks_HEmpute(vector <vector<double>>& ypred, vector<double> model0, vector 
                  vector<vector<int>> tag_geno_data, vector<long> tag_index);
 ```
 
-We provide two variants of implementations: BFV and CKKS.  We take model parameters (`model0` and `model`) and tag variant genotypes (`tag_geno_data`), and the tag SNPs' coordinates (`tag_model_starting_index`) as inputs. Then, the predicted results are saved as `ypred`.
+We provide two variants of implementations: BFV and CKKS.  We take model parameters (`model0` and `model`) and tag variant genotypes (`tag_geno_data`), and the tag SNPs' coordinates (`tag_model_starting_index`) as inputs. Then, the predicted results are saved as `ypred`. The details are divided into several steps:
+
+- We first set the HE scheme with secure encryption parameters by using the class of `EncryptionParameters`. 
+- We generate the secret and public keys. By using these keys, we define the `Encryptor` class (for data encryption), the `Evaluator` class (for computation on ciphertexts), and the `Decryptor` class (for ciphertext decryption). 
+- The tag variant genotypes are encrypted using the public key, and the model parameters are encoded as plaintext polynomials. 
+- We perform secure imputation computation on encrypted genotypes and encoded model parameters. 
+- The encrypted results are decrypted using the secret key, yielding in the imputed results as `ypred`.
 
 
 ## Examples
