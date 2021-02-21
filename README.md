@@ -77,7 +77,7 @@ make
 The whole workflow is depicted as follows:
 
 <p align="center">
-<img src="res/framework.png"  height="270">
+<img src="HEmpute-Test/res/framework.png"  height="270">
 </p>
 
 
@@ -252,5 +252,5 @@ For example, if running the test program `./hefoo ckks ALL 16 80000 16 microAUC`
 ```
 
 <p align="center">
-<img src="res/microAUC_ckks_ALL_80000_32.png" height=350>
+<img src="HEmpute-Test/res/microAUC_ckks_ALL_80000_32.png" height=350>
 </p>
