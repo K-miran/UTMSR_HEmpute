@@ -18,7 +18,7 @@ Our paper is available at [https://www.biorxiv.org/content/10.1101/2020.07.02.18
     * [Preparing the Train Data](#Preparing-the-train-data)
     * [HEmpute-Train Example Run](#HEmpute-train-example-run)
     * [Preparing the Test Data](#Preparing-the-test-data)
-    * [HEmpute-Test Example Run](#HEmpute-test-example-run)
+    * [HEmpute-Test Example Run](#HEmpute-Test-example-run)
 
 
 ## Download 
@@ -45,7 +45,7 @@ make clean
 make
 ```
 
-The executable is located under directory. 
+The executable is located under the directory. 
 
 
 ### HEmpute-Test Installation
@@ -58,7 +58,7 @@ We will need to install the followings: m4, texinfo, homebrew, and cmake. You ca
 ` /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"` 
 - cmake: `brew install cmake `
 
-Afterward, you can install the modified SEAL library the following commands:
+Afterward, you can install the modified SEAL library with the following commands:
 
 ```
 cd HEmpute-Test
@@ -77,7 +77,7 @@ make
 The whole workflow is depicted as follows:
 
 <p align="center">
-<img src="HEmpute-Test/res/framework.png"  height="270">
+<img src="res/framework.png"  height="270">
 </p>
 
 
@@ -91,10 +91,10 @@ The code takes as input:
 - Optional: the known genotypes of the target variant genotypes for performing accuracy benchmarks. 
 
 and outputs:
-- The paramter set for the mean squared-error optimized linear model weights for each target variant -- one file each variant. 
+- The parameter set for the mean squared-error optimized linear model weights for each target variant -- one file for each variant. 
 - Optional: The imputed variant genotypes if the study variant genotypes are supplied.  
 
-The study tag and target variants can be used to test the models at the server side to test the accuracy of the plaintext imputation models. The output is formatted as an extended BED file with multiple columns. Please refer below for the specification of output file format.
+The study tag and target variants can be used to test the models at the server side to test the accuracy of the plaintext imputation models. The output is formatted as an extended BED file with multiple columns. Please refer below for the specification of the output file format.
 
 ### HEmpute-Test: Secure Imputation via Homomorphic Encryption
 
@@ -109,11 +109,57 @@ The study tag and target variants can be used to test the models at the server s
 - `TestHEmpute.h`: detailed implementation of secure genotype imputation protocols
 - `main_hempute.h`: test program
 
+
+**An in-depth tutorial for HEmpute-Test**
+
+The whole process is divided into several steps:
+
+1. Loading the model parameters
+
+```
+void Read_Params(vector <vector<double>> &model_wt, vector <vector<string>> &tag_model_coordinates, 
+                 vector <string> &target_model_coordinates, string model_path, string coordinates_path);
+```
+
+Each row of the input data in the `model_path` directory is corresponding to one target SNP where the entries are per SNP parameters. Then the model weights are saved as a two-dimensional vector `model_wt` where the first column is corresponding to the intercepts of the models. The corresponding coordinates of the tag and target variant genotypes are saved as `tag_model_coordinates` and `target_model_coordinates`, respectively.
+
+2. Loading the tag variants
+
+```
+void Read_Genotype(vector <vector<double>>& ytest, vector<double>& model0, vector <vector<double>>& model,
+                   vector<vector<int>>& tag_geno_data, vector<long>& tag_model_starting_index, DATAParam &DATAparam,
+                   vector <vector<double>> model_data, vector <vector<string>> tag_model_coordinates, vector <string> target_model_coordinates,
+                   string tag_path, string target_path, int selection, const bool acc_test);
+```
+
+Each row of the input data in the `tag_path` directory is corresponding to one tag SNP and the tag variant genotypes are saved as `tag_geno_data`. Each row of the input data in the `target_path` directory  is corresponding to one target SNP. When `acc_test=1`, the target variant genotypes are saved as `ytest`. Otherwise, we do not save the variants. For each target variant, we store the starting coordinate for the tag SNPs to be used for evaluation. The stored model parameters are divided into `model0` (intercepts) and  `model` (slope). In class `DATAParam`, we have the following variables:
+- dim: the number of features
+- n_test: the sample size
+- n_snptag: the number of tag variants 
+- n_snptarget: the number of target variants 
+- n_snptarget_model: the actual number of imputed target variants 
+- n_thread: the number of threads to be used for implementation
+We have created the class named `DATAParam`, so now we create an object of `DATAParam` by specifyng the object name `DATAparam`.
+
+
+
+3. Evaluating the model over encrypted tag variants 
+
+```
+void bfv_HEmpute(vector <vector<double>>& ypred, vector<double> model0, vector <vector<double>> model, 
+                 vector<vector<int>> tag_geno_data, vector<long> tag_index);
+void ckks_HEmpute(vector <vector<double>>& ypred, vector<double> model0, vector <vector<double>> model, 
+                 vector<vector<int>> tag_geno_data, vector<long> tag_index);
+```
+
+We provide two variants of implementations: BFV and CKKS.  We take model parameters (`model0` and `model`) and tag variant genotypes (`tag_geno_data`), and the tag SNPs' coordinates (`tag_model_starting_index`) as inputs. Then, the predicted results are saved as `ypred`.
+
+
 ## Examples
  
 ### Preparing the Train Data 
 
-We have included the imputation of common 1kG variants using the tag variants on the Illumina 1M Duo Version 3 array platform as an example. For this, use following:
+We have included the imputation of common 1kG variants using the tag variants on the Illumina 1M Duo Version 3 array platform as an example. For this, use the following:
 
 ```
 cd HEmpute-Train/example/Illumina_1M_Duo_1kG/1kG
@@ -149,19 +195,15 @@ The `HEmpute-Test/data` directory contains three-types of (compressed) tesing da
 - Target variant genotypes: target_testing.txt, target_testing_AFR.txt, target_testing_AMR.txt, target_testing_EUR.txt.
 - target_geno_model_coordinates.txt 
 
-You can also download these data via this [link](https://github.com/K-miran/secure-imputation/tree/master/data).
-We excluded the variants at the very end of the chromosome 22 and at the middle of the chromosome (centromere) in the whole target SNPs because we do not have many tag SNPs around those locations. So, the `target_geno_model_coordinates.txt` contains the start coordinates of the target SNPs that were actually used for imputation in our experiment. 
+You can also download these data via this [link](https://github.com/K-miran/secure-imputation/tree/master/data). We excluded the variants at the very end of chromosome 22 and the middle of the chromosome (centromere) in the whole target SNPs because we do not have many tag SNPs around those locations. So, the `target_geno_model_coordinates.txt` contains the start coordinates of the target SNPs that were used for imputation in our experiment. 
 
-In our protocol, we will input the genotypes in `tag_testing.txt` to the models and accuracy will be tested using target genotype data in `target_testing.txt`. 
-The genotype files are tab-delimited and each row corresponds to a SNP. First 4 columns describe the SNP and remaining columns are the genotypes:
+In our protocol, we will input the genotypes in `tag_testing.txt` to the models and accuracy will be tested using target genotype data in `target_testing.txt`. The genotype files are tab-delimited and each row corresponds to a SNP. The first 4 columns describe the SNP and the remaining columns are the genotypes:
 
 ```bash
 [Chromosome] [Start] [End] [Name] [Genotype for 1st sample] [Genotype for 2nd sample] ...
 ```
 
-Each genotype is coded as 0/1/2. Also, we perform population stratification, so we divide the training and testing samples into 3 super-populations African (AFR), Americans (AMR), and European (EUR). The same directory contains the training/testing tag/target SNP genotypes for these samples.
-
-The trained parameters are found in the `HEmpute-Test/params` directory. The files are tab-delimited text files. Each row corresponds to a SNP.
+Each genotype is coded as 0/1/2. Also, we perform population stratification, so we divide the training and testing samples into 3 super-populations African (AFR), Americans (AMR), and European (EUR). The same directory contains the training/testing tag/target SNP genotypes for these samples. The trained parameters are found in the `HEmpute-Test/params` directory. The files are tab-delimited text files. Each row corresponds to a SNP.
 
 
 ### HEmpute-Test Example Run 
@@ -210,5 +252,5 @@ For example, if running the test program `./hefoo ckks ALL 16 80000 16 microAUC`
 ```
 
 <p align="center">
-<img src="HEmpute-Test/res/microAUC_ckks_ALL_80000_32.png" height=350>
+<img src="res/microAUC_ckks_ALL_80000_32.png" height=350>
 </p>
