@@ -219,11 +219,11 @@ For example, we first make a new folder `res` and run the test program `hefoo`  
 
 ```
 cd HEmpute-Test
-./hefoo bfv ALL 16 20000 2 est
+./hefoo ckks ALL 16 20000 2 est
 ```
 As in the example, the following list of command-line arguments is given after the name of the test program:
 - An HE scheme name (e.g., bfv or ckks).
-- Data type (e.g., ALL, AFR, AMR, EUR, LowMAF). 
+- Data type (e.g., ALL, AFR, AMR, EUR). 
 - Number of threads.
 - Number of target SNPs (e.g., 20000, 40000, 80000).
 - Vicinity size of the imputation linear model (e.g., 2, 4, 8, 16, 24, 32). That is, each variant genotype is modeled using genotypes of variants within variant vicinity of the variant.
@@ -241,6 +241,12 @@ For instance, you can run the test program with different inputs:
 ./hefoo ckks AFR 16 40000 16 label
 ./hefoo ckks AMR 16 40000 16 microAUC
 ./hefoo ckks EUR 16 80000 32 macroacc
+```
+
+To show the feasibility of our protocol, we provide the CKKS-based genotype imputation for the low-MAF variants  (Data type==LowMAF, Number of target SNPs==110000 with 8~32 vicinity sizes). You can run the test program as follows:
+
+```
+./hefoo ckks LowMAF 16 110000 8 est
 ```
 
 Then the results are stored in the `HEmpute-Test/res` directory. 
